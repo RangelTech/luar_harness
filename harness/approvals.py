@@ -42,7 +42,10 @@ class ApprovalService:
         # `confirm_actions`: true = todo tipo de acao; lista = so esses tipos; `force` = o agente
         # pediu (rt_confirm) porque a regra do template mandou, valha o manifesto ou nao.
         rule = ctx.limits.get("confirm_actions")
-        applies = force or rule is True or (isinstance(rule, list) and kind in rule)
+        # sem regra ligada no template, `rt_confirm` NAO abre cartao: a confirmacao e na conversa.
+        # (Antes, o modelo chamava rt_confirm por habito e, em canal externo, o atendimento nunca
+        # conseguia gerar Pix: o cliente nao pode aprovar cartao.)
+        applies = rule is True or (isinstance(rule, list) and (force or kind in rule))
         if not applies:
             log.info("acao sem cartao (confirm_actions desligado) run=%s kind=%s", ctx.run_id, kind)
             return "approved"

@@ -26,6 +26,10 @@ async def confirm(svc, ctx: RunContext, args: dict):
     topic = str(args.get("topic") or "custom").strip()[:60] or "custom"
     await svc.confirm(ctx, kind=f"custom:{topic}", risk=risk, summary=summary,
                       details={"topic": topic}, force=True)
+    if not ctx.limits.get("confirm_actions"):
+        return {"approved": True, "confirmation_card": False,
+                "note": "Este agente nao usa cartao de confirmacao. Se o usuario ja pediu a acao "
+                        "de forma clara, execute; se houver duvida real, pergunte na conversa."}
     return {"approved": True, "note": "Autorizado pelo usuario. Pode executar."}
 
 

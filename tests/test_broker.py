@@ -674,3 +674,13 @@ async def test_cancel_while_waiting_for_confirmation_releases_everything(rig):
     aid = next(e.data["approval_id"] for e in ev if e.type == "approval_required")
     r = await rig.decide(aid, "approve")
     assert r.status_code == 200 and not rig.ext.mp_requests()
+
+
+async def test_b6b_rt_confirm_sem_regra_nao_bloqueia_canal_externo(rig):
+    ev = await rig.send(rig.body(user=None, actor_type="external", channel="chatwoot",
+                                 limits={"confirm_actions": False},
+                                 message=tool("rt_confirm", {"summary": "Gerar Pix de R$ 5,00"})
+                                 + "[[echo]]"))
+    res = json.loads(final(ev).data["text"])
+    assert res["ok"] is True and res["result"]["approved"] is True
+    assert "approval_required" not in types(ev)
