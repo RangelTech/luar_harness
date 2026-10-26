@@ -68,7 +68,7 @@ async def artifact_put(svc, ctx: RunContext, args: dict):
     if not name:
         raise ToolError("invalid_args", "Informe o nome do arquivo.")
     if args.get("source_ref"):
-        raise ToolError("unavailable", "Registro a partir do ambiente ainda não está disponível.")
+        raise ToolError("unavailable", "Para entregar um arquivo do ambiente use a ferramenta rt_env_download com o caminho completo.")
     try:
         data = base64.b64decode(str(args.get("content_base64") or ""), validate=True)
     except (binascii.Error, ValueError) as exc:
