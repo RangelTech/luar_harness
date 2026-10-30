@@ -84,6 +84,11 @@ class Settings:
     # --- limites da run (spec 4.3)
     silence_timeout_s: float = 120.0
     turn_timeout_s: float = 1800.0
+    queue_status_url: str = ""   # GET de estado da fila de IA (llm-queue /v1/gpu/status); vazio = vigia desligado
+    queue_status_key: str = ""
+    queue_watch_after_s: float = 15.0
+    queue_watch_poll_s: float = 10.0
+    queue_watch_cap_s: float = 1700.0
     max_tool_calls_per_turn: int = 40
     tool_output_limit: int = 24_000
     sql_max_rows: int = 50_000
@@ -145,6 +150,11 @@ class Settings:
             model_retry_delay_s=_float("HARNESS_MODEL_RETRY_S", 8.0),
             silence_timeout_s=_float("HARNESS_SILENCE_TIMEOUT_S", 120.0),
             turn_timeout_s=_float("HARNESS_TURN_TIMEOUT_S", 1800.0),
+            queue_status_url=_env("HARNESS_QUEUE_STATUS_URL", ""),
+            queue_status_key=_env("HARNESS_QUEUE_STATUS_KEY", ""),
+            queue_watch_after_s=_float("HARNESS_QUEUE_WATCH_AFTER_S", 15.0),
+            queue_watch_poll_s=_float("HARNESS_QUEUE_WATCH_POLL_S", 10.0),
+            queue_watch_cap_s=_float("HARNESS_QUEUE_WATCH_CAP_S", 1700.0),
             max_tool_calls_per_turn=_int("HARNESS_MAX_TOOL_CALLS", 40),
             tool_output_limit=_int("HARNESS_TOOL_OUTPUT_LIMIT", 24_000),
             approval_timeout_s=_float("HARNESS_APPROVAL_TIMEOUT_S", 120.0),

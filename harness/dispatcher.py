@@ -22,6 +22,7 @@ from harness.hermes_client import (
     HermesUnavailable,
 )
 from harness.profiles import ProfileManager, list_package_assets
+from harness.queuewatch import QueueWatch
 from harness.runctx import RunContext, RunContexts, session_id_for
 from harness.scheduler import Grant, QueuedRun, Requeue
 from harness.security import Redactor
@@ -193,6 +194,8 @@ class Dispatcher:
         self.approvals = approvals
         self.http = http
         self.system_skills = system_skills
+        self.watch = QueueWatch(settings.queue_status_url, settings.queue_status_key, http, settings.queue_watch_after_s,
+                                settings.queue_watch_poll_s, settings.queue_watch_cap_s)
         self.stats = {"runs": 0, "completed": 0, "errors": 0, "auto_denied": 0}
 
     # ------------------------------------------------------------------ contexto
@@ -350,6 +353,7 @@ class Dispatcher:
         start_eff = ctx.effective_now()
         last_eff = ctx.silence_now()
         steered = False
+        qw: dict = {}  # estado do vigia da fila de IA nesta run
         try:
             while True:
                 if nxt is None:
@@ -363,12 +367,19 @@ class Dispatcher:
                     await self._stop_and_wait(hermes, profile, hid, nxt)
                     return "timeout"
                 wait_t = max(0.01, min(silence_left, turn_left, 0.5 if ctx.is_paused else 3600))
+                if self.watch.enabled:
+                    wait_t = min(wait_t, self.watch.poll_s)
                 done, _ = await asyncio.wait({nxt, cancel_wait}, timeout=wait_t,
                                              return_when=asyncio.FIRST_COMPLETED)
                 if cancel_wait in done:
                     await self._stop_and_wait(hermes, profile, hid, nxt)
                     return "cancelled"
                 if nxt not in done:
+                    if self.watch.enabled and (ctx.is_paused and qw.get("pause_at") is not None
+                                               or ctx.silence_now() - last_eff >= self.watch.after_s):
+                        aviso = await self.watch.tick(ctx, qw)  # fila de IA ligando: pausa os relogios e avisa o usuario
+                        if aviso:
+                            await self.bus.publish(ctx.run_id, "thinking", {"text": aviso}, ctx)
                     continue
                 try:
                     ev = nxt.result()
@@ -376,6 +387,8 @@ class Dispatcher:
                     return "interrupted"  # stream acabou sem evento terminal
                 finally:
                     nxt = None
+                if qw.get("pause_at") is not None:
+                    await self.watch.release(ctx, qw)  # o modelo respondeu: relogios voltam a andar
                 last_eff = ctx.silence_now()
                 sig = tr.translate(ev)
                 for etype, data in sig.events:
