@@ -1,6 +1,5 @@
 """Vigia da fila de IA: pausa os relogios da run e avisa o usuario enquanto a GPU liga (Spec 14 §3 e §4)."""
 import httpx
-import pytest
 
 from harness.queuewatch import QueueWatch, texto
 from harness.runctx import RunContext
