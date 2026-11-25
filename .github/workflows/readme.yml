@@ -1,0 +1,17 @@
+name: README
+# Portão do README (spec 57 §3.2): falha se faltar parte obrigatória, print ou (em produto) segredos.yml/.env.example/planos.json.
+# Modelo único em RangelTech/vps_rt_infra/scripts/readme/ (este arquivo é copiado para cada repositório).
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  readme:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Conferir o README
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/RangelTech/vps_rt_infra/main/scripts/readme/conferir_readme.py -o "$RUNNER_TEMP/conferir_readme.py"
+          python3 "$RUNNER_TEMP/conferir_readme.py" .
