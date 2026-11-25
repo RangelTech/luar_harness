@@ -1,0 +1,2 @@
+# Só NOMES. Os valores ficam no Infisical (spec 57, 0A.2). Mapa dos arquivos: vps_rt_infra/scripts/infisical/mapa_envs.json
+servicos: [kernel-harness, rt-hermes]
